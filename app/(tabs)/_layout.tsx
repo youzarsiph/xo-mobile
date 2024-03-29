@@ -1,55 +1,102 @@
-import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { Link, Tabs } from 'expo-router';
-import { Pressable, useColorScheme } from 'react-native';
+import React from "react";
+import { Link, Tabs } from "expo-router";
+import { CommonActions } from "@react-navigation/native";
+import { getHeaderTitle } from "@react-navigation/elements";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { Appbar, BottomNavigation, Icon } from "react-native-paper";
 
-import Colors from '../../constants/Colors';
+const TabLayout = () => (
+  <Tabs
+    screenOptions={{
+      tabBarHideOnKeyboard: true,
+      header: (props) => {
+        const title = getHeaderTitle(props.options, props.route.name);
 
-/**
- * You can explore the built-in icon families and icons on the web at https://icons.expo.fyi/
- */
-function TabBarIcon(props: {
-  name: React.ComponentProps<typeof FontAwesome>['name'];
-  color: string;
-}) {
-  return <FontAwesome size={28} style={{ marginBottom: -3 }} {...props} />;
-}
+        return (
+          <Appbar.Header style={{ gap: 16, paddingHorizontal: 16 }}>
+            <Appbar.Content title={title} />
 
-export default function TabLayout() {
-  const colorScheme = useColorScheme();
+            {props.options.headerRight
+              ? props.options.headerRight({})
+              : undefined}
+          </Appbar.Header>
+        );
+      },
+    }}
+    tabBar={({ navigation, state, descriptors, insets }) => (
+      <BottomNavigation.Bar
+        navigationState={state}
+        safeAreaInsets={insets}
+        onTabPress={({ route, preventDefault }) => {
+          const event = navigation.emit({
+            type: "tabPress",
+            target: route.key,
+            canPreventDefault: true,
+          });
 
-  return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-      }}>
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Tab One',
-          tabBarIcon: ({ color }) => <TabBarIcon name="code" color={color} />,
-          headerRight: () => (
-            <Link href="/modal" asChild>
-              <Pressable>
-                {({ pressed }) => (
-                  <FontAwesome
-                    name="info-circle"
-                    size={25}
-                    color={Colors[colorScheme ?? 'light'].text}
-                    style={{ marginRight: 15, opacity: pressed ? 0.5 : 1 }}
-                  />
-                )}
-              </Pressable>
-            </Link>
-          ),
+          if (event.defaultPrevented) {
+            preventDefault();
+          } else {
+            navigation.dispatch({
+              ...CommonActions.navigate(route.name, route.params),
+              target: state.key,
+            });
+          }
+        }}
+        renderIcon={({ route, focused, color }) => {
+          const { options } = descriptors[route.key];
+          if (options.tabBarIcon) {
+            return options.tabBarIcon({ focused, color, size: 24 });
+          }
+
+          return null;
+        }}
+        getLabelText={({ route }) => {
+          const { options } = descriptors[route.key];
+          const label =
+            options.tabBarLabel !== undefined
+              ? options.tabBarLabel
+              : options.title !== undefined
+              ? options.title
+              : route.title;
+
+          return label;
         }}
       />
-      <Tabs.Screen
-        name="two"
-        options={{
-          title: 'Tab Two',
-          tabBarIcon: ({ color }) => <TabBarIcon name="code" color={color} />,
-        }}
-      />
-    </Tabs>
-  );
-}
+    )}
+  >
+    <Tabs.Screen
+      name="index"
+      options={{
+        title: "Home",
+        tabBarIcon: (props) => (
+          <MaterialCommunityIcons
+            {...props}
+            size={24}
+            name={props.focused ? "home" : "home-outline"}
+          />
+        ),
+      }}
+    />
+    <Tabs.Screen
+      name="settings"
+      options={{
+        title: "Settings",
+        headerRight: () => (
+          <Link href={"/modal"}>
+            <Icon size={24} source={"information"} />
+          </Link>
+        ),
+        tabBarIcon: (props) => (
+          <MaterialCommunityIcons
+            {...props}
+            size={24}
+            name={props.focused ? "cog" : "cog-outline"}
+          />
+        ),
+      }}
+    />
+  </Tabs>
+);
+
+export default TabLayout;

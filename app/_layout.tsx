@@ -1,14 +1,11 @@
-import tw, { useDeviceContext } from "twrnc";
-import AntDesign from "@expo/vector-icons/AntDesign";
-import {
-  DarkTheme,
-  DefaultTheme,
-  ThemeProvider,
-} from "@react-navigation/native";
+import React from "react";
 import { useFonts } from "expo-font";
-import { SplashScreen, Stack } from "expo-router";
-import { useEffect } from "react";
 import { useColorScheme } from "react-native";
+import { SplashScreen, Stack } from "expo-router";
+import { PaperProvider, Appbar } from "react-native-paper";
+import { getHeaderTitle } from "@react-navigation/elements";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { Themes } from "@/styles";
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -17,24 +14,24 @@ export {
 
 export const unstable_settings = {
   // Ensure that reloading on `/modal` keeps a back button present.
-  initialRouteName: "index",
+  initialRouteName: "(tabs)",
 };
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
-export default function RootLayout() {
+const RootLayout = () => {
   const [loaded, error] = useFonts({
-    SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
-    ...AntDesign.font,
+    JetBrainsMono: require("../assets/fonts/JetBrainsMono.ttf"),
+    ...MaterialCommunityIcons.font,
   });
 
   // Expo Router uses Error Boundaries to catch errors in the navigation tree.
-  useEffect(() => {
+  React.useEffect(() => {
     if (error) throw error;
   }, [error]);
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (loaded) {
       SplashScreen.hideAsync();
     }
@@ -45,18 +42,38 @@ export default function RootLayout() {
   }
 
   return <RootLayoutNav />;
-}
+};
 
-function RootLayoutNav() {
-  useDeviceContext(tw);
+const RootLayoutNav = () => {
   const colorScheme = useColorScheme();
 
   return (
-    <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="index" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: "modal" }} />
+    <PaperProvider theme={colorScheme === "light" ? Themes.light : Themes.dark}>
+      <Stack
+        screenOptions={{
+          animation: "ios",
+          header: (props) => {
+            const title = getHeaderTitle(props.options, props.route.name);
+
+            return (
+              <Appbar.Header>
+                {props.back ? (
+                  <Appbar.BackAction onPress={props.navigation.goBack} />
+                ) : null}
+                <Appbar.Content title={title} />
+              </Appbar.Header>
+            );
+          },
+        }}
+      >
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="modal"
+          options={{ title: "Modal", presentation: "modal" }}
+        />
       </Stack>
-    </ThemeProvider>
+    </PaperProvider>
   );
-}
+};
+
+export default RootLayout;
