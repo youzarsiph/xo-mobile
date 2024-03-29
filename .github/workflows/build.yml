@@ -27,8 +27,19 @@ jobs:
       - name: Generate Native Directories
         run: npx expo prebuild --clean
 
+      - name: Setup Android Emulator
+        uses: ReactiveCircus/android-emulator-runner@v2
+        with:
+          api-level: 29
+          script: echo "Emulator has started"
+
       - name: Build Android App
         run: npx expo run:android --variant release
+
+      - name: Setup iOS Simulator
+        uses: futureware-tech/simulator-action@v3
+        with:
+          model: 'iPhone 8'
 
       - name: Build iOS App
         run: npx expo run:ios --configuration Release
