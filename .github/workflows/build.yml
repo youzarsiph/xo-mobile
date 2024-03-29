@@ -1,0 +1,63 @@
+name: Build Expo App
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Build Expo App for Android and iOS
+    runs-on: macos-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Expo CLI
+        run: npm install -g expo-cli
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Generate Native Directories
+        run: npx expo prebuild --clean
+
+      - name: Build Android App
+        run: npx expo run:android --variant release
+
+      - name: Build iOS App
+        run: npx expo run:ios --configuration Release
+
+      - name: Archive Android Build Artifact
+        run: zip -r android-build.zip android/app/build/outputs/apk/release/app-release.apk
+
+      - name: Archive iOS Build Artifact
+        run: zip -r ios-build.zip ios/build/Build/Products/Release-iphoneos
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+      - name: Upload Android Build Artifact to GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: ./android-build.zip
+          token: ${{ github.token }}
+
+      - name: Upload iOS Build Artifact to GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: ./ios-build.zip
+          token: ${{ github.token }}
